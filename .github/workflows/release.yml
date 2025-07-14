@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - goos: windows
+            goarch: amd64
+            cgo_enabled: 0
+            ext: .exe
+            runs-on: ubuntu-latest
+          - goos: linux
+            goarch: amd64
+            cgo_enabled: 0
+            ext: ''
+            runs-on: ubuntu-latest
+          - goos: linux
+            goarch: arm
+            cgo_enabled: 0
+            ext: ''
+            runs-on: ubuntu-latest
+          - goos: linux
+            goarch: arm64
+            cgo_enabled: 0
+            ext: ''
+            runs-on: ubuntu-latest
+          - goos: darwin
+            goarch: amd64
+            cgo_enabled: 1
+            ext: ''
+            runs-on: macos-latest
+
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.3'
+
+    - name: Get dependencies
+      run: go mod download
+
+    - name: Build binary
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: ${{ matrix.cgo_enabled }}
+      run: |
+        BINARY_NAME="litime-monitor-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}"
+        go build -ldflags="-s -w" -o "$BINARY_NAME" .
+        echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.BINARY_NAME }}
+        path: ${{ env.BINARY_NAME }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+
+    - name: Prepare release assets
+      run: |
+        mkdir -p release
+        find ./artifacts -type f -name "litime-monitor-*" -exec cp {} ./release/ \;
+        ls -la ./release/
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./release/*
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          ## Release ${{ github.ref_name }}
+          
+          Automated release created from tag ${{ github.ref_name }}.
+          
+          ### Downloads
+          
+          Choose the appropriate binary for your system:
+          
+          - **Windows (64-bit)**: `litime-monitor-windows-amd64.exe`
+          - **macOS (64-bit Intel)**: `litime-monitor-darwin-amd64`
+          - **Linux (64-bit)**: `litime-monitor-linux-amd64`
+          - **Linux (ARM 32-bit)**: `litime-monitor-linux-arm`
+          - **Linux (ARM 64-bit)**: `litime-monitor-linux-arm64`
+          
+          ### Installation
+          
+          1. Download the appropriate binary for your system
+          2. Make it executable (Linux/macOS): `chmod +x litime-monitor-*`
+          3. Run with: `./litime-monitor-* --help`
+          
+          For more information, see the [README](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/README.md).
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

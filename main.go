@@ -139,7 +139,7 @@ func main() {
 			return
 		}
 		for _, char := range characteristics {
-			slog.Info("characteristic found", "characteristic.uuid", char.UUID().String(), "characteristic.properties", char.Properties())
+			slog.Info("characteristic found", "characteristic.uuid", char.UUID().String())
 		}
 
 		if srv.UUID().String() == domain.ServiceUUID() {
@@ -235,8 +235,10 @@ func main() {
 	// Periodically write to the characteristic to request data
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
-	for {
-		_, err := char.Write([]byte{0x01, 0x03, 0x01, 0x01, 0x00, 0x13, 0x54, 0x3B})
+
+	command := []byte{0x01, 0x03, 0x01, 0x01, 0x00, 0x13, 0x54, 0x3B}
+	for range ticker.C {
+		_, err := Write(char, command)
 		if err != nil {
 			slog.Error("failed to write to characteristic", "error", err.Error())
 			return
