@@ -221,6 +221,7 @@ func main() {
 				"LoadVoltage", sample.LoadVoltage,
 				"LoadCurrent", sample.LoadCurrent,
 				"LoadPower", sample.LoadPower,
+				"LoadStatus", sample.LoadStatus,
 				"PanelVoltage", sample.PanelVoltage,
 				"MaxChargePower", sample.MaxChargePower,
 				"EnergyToday", sample.EnergyToday,
