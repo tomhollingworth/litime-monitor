@@ -46,6 +46,7 @@ func (s *InfluxDBSink) Send(sample domain.SolarChargeControllerSample) error {
 		AddField("load_voltage", sample.LoadVoltage).
 		AddField("load_current", sample.LoadCurrent).
 		AddField("load_power", sample.LoadPower).
+		AddField("load_status", sample.LoadStatus).
 		AddField("panel_voltage", sample.PanelVoltage).
 		AddField("max_charge_power", sample.MaxChargePower).
 		AddField("energy_today", sample.EnergyToday).

@@ -19,6 +19,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	ON      = "ON"
+	OFF     = "OFF"
+	UNKNOWN = "UNKNOWN: %d"
+)
+
 type SolarChargeControllerSample struct {
 	BatteryVoltage float32 // Volts
 	BatteryCurrent float32 // Amps
@@ -29,6 +35,7 @@ type SolarChargeControllerSample struct {
 	LoadVoltage float32 // Volts
 	LoadCurrent float32 // Amps
 	LoadPower   float32 // Watts
+	LoadStatus  string  // ON, OFF, UNKNOWN
 
 	PanelVoltage   float32 // Volts
 	MaxChargePower int32   // kW
@@ -46,6 +53,7 @@ func (s SolarChargeControllerSample) String() string {
 		"LoadVoltage: " + fmt.Sprintf("%.1f", s.LoadVoltage) + "V, " +
 		"LoadCurrent: " + fmt.Sprintf("%.2f", s.LoadCurrent) + "A, " +
 		"LoadPower: " + fmt.Sprintf("%.1f", s.LoadPower) + "W, " +
+		"LoadStatus: " + s.LoadStatus +
 		"PanelVoltage: " + fmt.Sprintf("%.1f", s.PanelVoltage) + "V, " +
 		"MaxChargePower: " + fmt.Sprintf("%d", s.MaxChargePower) + "W, " +
 		"EnergyToday: " + fmt.Sprintf("%d", s.EnergyToday) + "Wh, " +
@@ -95,7 +103,7 @@ func HandleResponseData(data []byte) (sample *SolarChargeControllerSample, err e
 	sample.BatteryPower = int32(rawBattPower) // Convert to watts
 
 	// Controller temperature
-	sample.ControllerTemperature = float32(data[11])
+	sample.ControllerTemperature = float32(uint16(data[12])<<8 | uint16(data[11]))
 
 	// Load data
 	rawLoadVoltage := uint16(data[13])<<8 | uint16(data[14])
@@ -119,12 +127,29 @@ func HandleResponseData(data []byte) (sample *SolarChargeControllerSample, err e
 	rawEnergyToday := uint16(data[23])<<8 | uint16(data[24])
 	sample.EnergyToday = int32(rawEnergyToday)
 
+	// Unsure what bytes 25..26 are for
+	// unsure := uint16(data[25])<<8 | uint16(data[26])
+
+	// Load status
+	loadStatusRaw := uint16(data[27])<<8 | uint16(data[28])
+	switch loadStatusRaw {
+	case 2:
+		sample.LoadStatus = ON
+	case 32770:
+		sample.LoadStatus = OFF
+	default:
+		sample.LoadStatus = fmt.Sprintf(UNKNOWN, loadStatusRaw)
+	}
+
+	// Unsure what bytes 29..30 are for
+	// unsure := uint16(data[29])<<8 | uint16(data[30])
+
 	// Running days
 	rawDays := uint16(data[31])<<8 | uint16(data[32])
 	sample.RunningDays = int32(rawDays)
 
 	// Total energy charged
-	rawTotalEnergy := uint16(data[35])<<8 | uint16(data[36])
+	rawTotalEnergy := uint32(data[33])<<24 | uint32(data[34])<<16 | uint32(data[35])<<8 | uint32(data[36])
 	sample.TotalEnergy = int32(rawTotalEnergy)
 
 	return sample, nil
