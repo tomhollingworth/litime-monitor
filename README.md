@@ -8,7 +8,7 @@ This application monitors solar charge controller data from LiTime MPPT controll
 
 - Battery voltage, current, and power
 - Controller temperature
-- Load voltage, current, and power
+- Load voltage, current, status (on/off) and power
 - Solar panel voltage
 - Daily energy statistics
 - Total energy and running days
@@ -108,6 +108,7 @@ Data is stored in InfluxDB with the measurement name `solar_charge_controller` a
 - `load_voltage` (float)
 - `load_current` (float)
 - `load_power` (float)
+- `load_status` (string)
 - `panel_voltage` (float)
 - `max_charge_power` (int)
 - `energy_today` (int)
@@ -125,6 +126,10 @@ Contributions are welcome! I'm particularly interested in:
 Please feel free to open issues or submit pull requests.
 
 ## Changelog
+
+### v1.1.0 (2025-08-15)
+- Fix energy total overflow
+- Add Load Status (on/off) capture
 
 ### v1.0.0 (2025-07-14)
 - Initial release
