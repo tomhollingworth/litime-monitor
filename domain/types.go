@@ -103,7 +103,7 @@ func HandleResponseData(data []byte) (sample *SolarChargeControllerSample, err e
 	sample.BatteryPower = int32(rawBattPower) // Convert to watts
 
 	// Controller temperature
-	sample.ControllerTemperature = float32(uint16(data[12])<<8 | uint16(data[11]))
+	sample.ControllerTemperature = float32(data[11])
 
 	// Load data
 	rawLoadVoltage := uint16(data[13])<<8 | uint16(data[14])
