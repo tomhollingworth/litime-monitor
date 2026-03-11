@@ -127,6 +127,9 @@ Please feel free to open issues or submit pull requests.
 
 ## Changelog
 
+### v1.1.1 (2026-03-11)
+- Fix parsing controller temperature
+
 ### v1.1.0 (2025-08-15)
 - Fix energy total overflow
 - Add Load Status (on/off) capture
